@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import random
 import time
-from unidecode import unidecode
+
 
 teams = [
     'atl', 'bos', 'brk', 'cho', 'chi', 'cle', 'dal', 
@@ -11,14 +11,11 @@ teams = [
     'orl', 'phi', 'pho', 'por', 'sac', 'sas', 'tor', 
     'uta', 'was'
 ]
-len(teams)
 
 seasons = [
-    '2014', '2015', '2016', '2017', '2018'
-    '2019', '2020', '2021', '2022', '2023' , '2024'
+    '2014', '2015', '2016', '2017', '2018',
+    '2019', '2020', '2021', '2022', '2023', '2024'
 ]
-len(seasons)
-
 
 stats = [
     'FG', 'FGA', 'fg%', 
@@ -30,19 +27,37 @@ stats = [
 ]
 
 tm_stats_dictionary = {stat: 'Tm_' + str(stat) for stat in stats}
-
 opp_stats_dictionary = {stat + '.1': 'Opp_' + str(stat) for stat in stats}
 
 # Data frame to append into
-
 nba_Data_Frame = pd.DataFrame()
 
-# Going through seasons
-
 for season in seasons:
-
-    # Going through teams
-
     for team in teams:
+        url = f'https://www.basketball-reference.com/teams/{team}/{season}/gamelog/'
+        print(url)
 
-        url = 'https://www.basketball-reference.com/teams' + team + '/' + season + 
+        try:
+            team_df = pd.read_html(url, header=1, attrs={'id': 'tgl_basic'})[0]
+            team_df = team_df[(team_df['Rk'].str != '') & (team_df['Rk'].str.isnumeric())]
+            team_df = team_df.drop(columns=['Rk', 'unnamed: 24'])
+
+            team_df = team_df.rename(columns={'unnamed: 3': 'Home', 'Tm': 'tm_pts', 'opp.1': 'Opp_pts'})
+            team_df = team_df.rename(columns=tm_stats_dictionary)
+            team_df = team_df.rename(columns=opp_stats_dictionary)
+
+            team_df['Home'] = team_df['Home'].apply(lambda x: 0 if x == '@' else 1)
+
+            team_df.insert(loc=0, column='Season', value=season)
+            team_df.insert(loc=1, column='Team', value=team.upper())
+
+            nba_Data_Frame = pd.concat([nba_Data_Frame, team_df], ignore_index=True)
+
+            # Pause to respect scraping limits
+            time.sleep(random.randint(4, 6))
+        except Exception as e:
+            print(f"Error fetching data for {team} in {season}: {e}")
+            continue
+
+print(nba_Data_Frame)
+nba_Data_Frame.to_csv('nba-gamelogs-2014-2024.csv', index=False)
