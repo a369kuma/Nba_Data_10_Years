@@ -1,4 +1,4 @@
-# NBA Game Logs Scraper
+# NBA Game Log Scraper
 
 This project is a Python script designed to scrape NBA game logs from Basketball Reference for every NBA team from 2013 to 2024. The data is processed into a structured format and saved as a CSV file for further analysis.
 
